@@ -1,0 +1,88 @@
+version: 2
+
+sources:
+  - name: staging
+    description: Raw Airbnb source data loaded into Snowflake.
+    database: AIRBNB
+    schema: staging
+    tables:
+      - name: bookings
+        description: Booking transactions from the source system.
+
+        columns:
+
+          - name: BOOKING_ID
+            description: Unique identifier of a booking.
+            tests:
+              - unique
+              - not_null
+
+          - name: LISTING_ID
+            description: Identifier of the booked listing.
+            tests:
+              - not_null
+
+          - name: BOOKING_DATE
+            description: Date when the booking was made.
+            tests:
+              - not_null
+
+          - name: BOOKING_AMOUNT
+            description: Booking amount before additional fees.
+            tests:
+              - not_null
+
+          - name: CREATED_AT
+            description: Source record creation timestamp.
+            tests:
+              - not_null
+
+      - name: listings
+        description: Property listings.
+
+        columns:
+
+          - name: LISTING_ID
+            description: Unique identifier of a listing.
+            tests:
+              - unique
+              - not_null
+
+          - name: HOST_ID
+            description: Owner of the listing.
+            tests:
+              - not_null
+
+          - name: PRICE_PER_NIGHT
+            description: Nightly price of the listing.
+            tests:
+              - not_null
+
+          - name: CREATED_AT
+            description: Source record creation timestamp.
+            tests:
+              - not_null
+
+      - name: hosts
+        description: Airbnb hosts.
+
+        columns:
+
+          - name: HOST_ID
+            description: Unique identifier of a host.
+            tests:
+              - unique
+              - not_null
+
+          - name: HOST_NAME
+            description: Host display name.
+            tests:
+              - not_null
+
+          - name: RESPONSE_RATE
+            description: Percentage of guest inquiries answered by the host.
+
+          - name: CREATED_AT
+            description: Source record creation timestamp.
+            tests:
+              - not_null

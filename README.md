@@ -8,6 +8,12 @@ The goal of this project was to transform raw Airbnb data into a structured anal
 
 ---
 
+## 🎯 Business Goal
+
+An Airbnb-style business needs to understand which listings and hosts drive revenue, how pricing changes over time, and how booking behavior evolves — while trusting that historical changes to a listing's price or attributes aren't silently overwritten. This warehouse delivers that: a clean, tested Gold layer (`FactBookings`, `DimListings`, `DimHosts`) that supports both current-state reporting and historical trend analysis (via SCD Type 2 on listings), ready to plug into a BI tool for revenue, occupancy, and host performance analysis.
+
+---
+
 ## Project Objectives
 
 The main objectives of this project:

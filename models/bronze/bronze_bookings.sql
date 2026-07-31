@@ -1,5 +1,4 @@
-{{ config(materialized='incremental',
-        on_schema_change='append_new_columns')}}
+{{ config(materialized='incremental')}}
 
 SELECT *, CURRENT_TIMESTAMP() AS bronze_loaded_at FROM {{source('staging','bookings')}}
 

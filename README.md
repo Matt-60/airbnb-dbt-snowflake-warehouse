@@ -62,6 +62,8 @@ ON_ERROR = 'CONTINUE';
 
 **Why snapshot instead of append at the staging level:** loading directly with append duplicates every unchanged row on every reload (since Snowflake reloads the whole file when its checksum changes, not just the delta rows). Truncating staging each run keeps it as a clean mirror of the source; history is instead owned explicitly by the Bronze layer.
 
+📄 Full script (storage integration, file format, stage, staging tables, stored procedure + scheduled `TASK`): [`azure_snowflake_ingestion.sql`](./azure_snowflake_ingestion.sql)
+
 ## 🥉 Bronze — Historized Append Layer
 
 Bronze reads from the staging snapshot and appends only rows new since the last run, using `created_at` as a watermark (the source bumps `created_at` on update as well as insert, so it doubles as a change-detection column). This is intentionally append-only: the same business key can appear multiple times over time, each row representing a version — Bronze is the audit trail / changelog, not a queryable current state.

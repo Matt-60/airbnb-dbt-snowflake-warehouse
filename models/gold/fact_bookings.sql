@@ -21,6 +21,7 @@ FROM {{ ref('silver_obt') }} b
 
 LEFT JOIN {{ ref('dim_listings') }} l
     ON b.LISTING_ID = l.LISTING_ID
+    AND L.IS_CURRENT = 'FALSE'
     --AND b.BOOKING_DATE BETWEEN l.VALID_FROM AND l.VALID_TO 
 -- DimListings is modeled as SCD2; however, the historical date range join (BOOKING_DATE BETWEEN VALID_FROM AND VALID_TO) is not applied here because the synthetic dataset does not provide complete historical alignment between booking dates and listing versions.
 

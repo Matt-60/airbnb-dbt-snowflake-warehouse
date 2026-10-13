@@ -1,0 +1,56 @@
+models:
+  - name: silver_bookings
+    description: "One row per booking (current state from Fivetran). IS_DELETED = deleted at the source."
+    columns:
+      - name: BOOKING_ID
+        data_tests: [not_null, unique]
+      - name: LISTING_ID
+        data_tests:
+          - not_null
+          - relationships:
+              arguments: {to: ref('silver_listings'), field: LISTING_ID}
+      - name: BOOKING_DATE
+        data_tests: [not_null]
+      - name: NIGHTS_BOOKED
+        data_tests:
+          - dbt_utils.expression_is_true:
+              arguments: {expression: "> 0"}
+      - name: TOTAL_AMOUNT
+        data_tests:
+          - dbt_utils.expression_is_true:
+              arguments: {expression: ">= 0"}
+      - name: IS_DELETED
+        data_tests: [not_null]
+
+  - name: silver_listings
+    columns:
+      - name: LISTING_ID
+        data_tests: [not_null, unique]
+      - name: HOST_ID
+        data_tests:
+          - not_null
+          - relationships:
+              arguments: {to: ref('silver_hosts'), field: HOST_ID}
+      - name: PRICE_PER_NIGHT
+        data_tests:
+          - dbt_utils.expression_is_true:
+              arguments: {expression: "> 0"}
+      - name: PRICE_PER_NIGHT_TAG
+        data_tests:
+          - accepted_values:
+              arguments: {values: [Low, Medium, High]}
+
+  - name: silver_hosts
+    columns:
+      - name: HOST_ID
+        data_tests: [not_null, unique]
+      - name: RESPONSE_RATE_QUALITY
+        data_tests:
+          - accepted_values:
+              arguments: {values: [Very Good, Good, Fair, Poor]}
+
+  - name: silver_obt
+    description: "One big table, grain = 1 active booking. Joins must not multiply rows."
+    columns:
+      - name: BOOKING_ID
+        data_tests: [not_null, unique]

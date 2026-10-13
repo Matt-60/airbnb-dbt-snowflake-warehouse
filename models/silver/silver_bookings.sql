@@ -1,36 +1,24 @@
-{{ config(materialized='incremental', unique_key='BOOKING_ID') }}
+{{ config(materialized='incremental', unique_key='BOOKING_ID', incremental_strategy='merge') }}
 
-WITH source_data AS (
+-- One row per booking. Fivetran already merges by primary key, so no deduplication is needed;
+-- rows deleted at the source are kept with IS_DELETED = TRUE (an incremental MERGE would otherwise
+-- never remove them) and filtered out in Gold.
+SELECT
+    BOOKING_ID,
+    LISTING_ID,
+    CAST(BOOKING_DATE AS DATE)                                          AS BOOKING_DATE,
+    NIGHTS_BOOKED,
+    BOOKING_AMOUNT,
+    {{ multiply('NIGHTS_BOOKED', 'BOOKING_AMOUNT', 2) }}                AS TOTAL_BOOKING_AMOUNT,
+    CLEANING_FEE,
+    SERVICE_FEE,
+    {{ multiply('NIGHTS_BOOKED', 'BOOKING_AMOUNT', 2) }} + CLEANING_FEE + SERVICE_FEE AS TOTAL_AMOUNT,
+    {{ init_cap('BOOKING_STATUS') }}                                    AS BOOKING_STATUS,
+    CREATED_AT,
+    _FIVETRAN_DELETED                                                   AS IS_DELETED,
+    _FIVETRAN_SYNCED
+FROM {{ source('fivetran', 'bookings') }}
 
-    SELECT
-        BOOKING_ID,
-        LISTING_ID,
-        CAST(BOOKING_DATE AS DATE) AS BOOKING_DATE,
-        NIGHTS_BOOKED,
-        BOOKING_AMOUNT,
-        {{ multiply('NIGHTS_BOOKED', 'BOOKING_AMOUNT', 2) }} AS TOTAL_BOOKING_AMOUNT,
-        CLEANING_FEE,
-        SERVICE_FEE,
-        {{ multiply('NIGHTS_BOOKED', 'BOOKING_AMOUNT', 2) }} + CLEANING_FEE + SERVICE_FEE AS TOTAL_AMOUNT,
-        {{ init_cap('BOOKING_STATUS') }} AS BOOKING_STATUS,
-        CREATED_AT
-    FROM {{ ref('bronze_bookings') }}
-
-    {% if is_incremental() %}
-    WHERE CREATED_AT > (SELECT COALESCE(MAX(CREATED_AT), '1900-01-01'::TIMESTAMP_NTZ) FROM {{ this }})
-    {% endif %}
-
-),
-
-deduped AS (
-
-    SELECT *
-    FROM source_data
-    QUALIFY ROW_NUMBER() OVER (
-        PARTITION BY BOOKING_ID
-        ORDER BY CREATED_AT DESC
-    ) = 1
-
-)
-
-SELECT * FROM deduped
+{% if is_incremental() %}
+WHERE {{ incremental_window() }}
+{% endif %}

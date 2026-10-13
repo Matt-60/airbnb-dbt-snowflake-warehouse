@@ -1,0 +1,52 @@
+models:
+  - name: fact_bookings
+    description: "Grain: one row per booking. LISTING_KEY = listing version valid on the booking date."
+    columns:
+      - name: BOOKING_ID
+        description: "Grain test: a fan-out in any join fails here."
+        data_tests: [not_null, unique]
+      - name: LISTING_KEY
+        description: "NULL would mean no listing version covered the booking date."
+        data_tests:
+          - not_null
+          - relationships:
+              arguments: {to: ref('dim_listings'), field: LISTING_KEY}
+      - name: HOST_KEY
+        data_tests:
+          - not_null
+          - relationships:
+              arguments: {to: ref('dim_hosts'), field: HOST_KEY}
+      - name: DATE_KEY
+        data_tests:
+          - not_null
+          - relationships:
+              arguments: {to: ref('dim_date'), field: DATE_KEY}
+
+  - name: dim_listings
+    description: "SCD Type 2 — one row per listing version, valid in [VALID_FROM, VALID_TO)."
+    data_tests:
+      - dbt_utils.mutually_exclusive_ranges:
+          arguments:
+            lower_bound_column: VALID_FROM
+            upper_bound_column: VALID_TO
+            partition_by: LISTING_ID
+            gaps: allowed
+    columns:
+      - name: LISTING_KEY
+        data_tests: [not_null, unique]
+      - name: LISTING_ID
+        data_tests:
+          - not_null
+          - unique:
+              config: {where: "IS_CURRENT"}
+
+  - name: dim_hosts
+    description: "SCD Type 1 — current host attributes."
+    columns:
+      - name: HOST_KEY
+        data_tests: [not_null, unique]
+
+  - name: dim_date
+    columns:
+      - name: DATE_KEY
+        data_tests: [not_null, unique]

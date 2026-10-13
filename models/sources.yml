@@ -1,88 +1,55 @@
 version: 2
 
 sources:
-  - name: staging
-    description: Raw Airbnb source data loaded into Snowflake.
+  - name: fivetran
+    description: >
+      Airbnb tables replicated by Fivetran from Azure SQL Database (Change Tracking).
+      Fivetran keeps the current state per primary key and adds _FIVETRAN_SYNCED (when the row last
+      changed in Snowflake) and _FIVETRAN_DELETED (soft-delete flag for rows deleted at the source).
     database: AIRBNB
-    schema: staging
+    schema: "{{ var('fivetran_schema') }}"
+    config:
+      loaded_at_field: _FIVETRAN_SYNCED
+      freshness:                      # Fivetran syncs once a day
+        warn_after: {count: 26, period: hour}
+        error_after: {count: 50, period: hour}
+
     tables:
       - name: bookings
         description: Booking transactions from the source system.
-
         columns:
-
           - name: BOOKING_ID
-            description: Unique identifier of a booking.
-            tests:
-              - unique
-              - not_null
-
+            description: Unique identifier of a booking (primary key in Azure SQL).
+            data_tests: [unique, not_null]
           - name: LISTING_ID
-            description: Identifier of the booked listing.
-            tests:
-              - not_null
-
+            data_tests: [not_null]
           - name: BOOKING_DATE
-            description: Date when the booking was made.
-            tests:
-              - not_null
-
+            data_tests: [not_null]
           - name: BOOKING_AMOUNT
             description: Booking amount before additional fees.
-            tests:
-              - not_null
-
+            data_tests: [not_null]
           - name: CREATED_AT
-            description: Source record creation timestamp.
-            tests:
-              - not_null
+            description: Source change timestamp (bumped on insert and update).
+            data_tests: [not_null]
 
       - name: listings
         description: Property listings.
-
         columns:
-
           - name: LISTING_ID
-            description: Unique identifier of a listing.
-            tests:
-              - unique
-              - not_null
-
+            data_tests: [unique, not_null]
           - name: HOST_ID
-            description: Owner of the listing.
-            tests:
-              - not_null
-
+            data_tests: [not_null]
           - name: PRICE_PER_NIGHT
-            description: Nightly price of the listing.
-            tests:
-              - not_null
-
+            data_tests: [not_null]
           - name: CREATED_AT
-            description: Source record creation timestamp.
-            tests:
-              - not_null
+            data_tests: [not_null]
 
       - name: hosts
         description: Airbnb hosts.
-
         columns:
-
           - name: HOST_ID
-            description: Unique identifier of a host.
-            tests:
-              - unique
-              - not_null
-
+            data_tests: [unique, not_null]
           - name: HOST_NAME
-            description: Host display name.
-            tests:
-              - not_null
-
-          - name: RESPONSE_RATE
-            description: Percentage of guest inquiries answered by the host.
-
+            data_tests: [not_null]
           - name: CREATED_AT
-            description: Source record creation timestamp.
-            tests:
-              - not_null
+            data_tests: [not_null]

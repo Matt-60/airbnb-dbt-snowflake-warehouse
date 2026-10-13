@@ -11,17 +11,16 @@ seed-paths: ["seeds"]
 macro-paths: ["macros"]
 snapshot-paths: ["snapshots"]
 
-target-path: "target"  # directory which will store compiled SQL files
-clean-targets:         # directories to be removed by `dbt clean`
+clean-targets:
   - "target"
   - "dbt_packages"
 
+vars:
+  # Raw / Bronze layer = schema written by the Fivetran Azure SQL connector (destination prefix + source schema)
+  fivetran_schema: AZURE_SQL_DB_DBO
 
 models:
   Airbnb_DBT:
-    bronze:
-      +materialized: table
-      +schema: bronze
     silver:
       +materialized: table
       +schema: silver

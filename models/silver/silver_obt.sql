@@ -34,3 +34,5 @@ FROM
         ON {{ config['join_condition'] }}
         {% endif %}
         {% endfor %}
+-- soft-deleted bookings (removed at the source) never reach Gold
+WHERE NOT SILVER_bookings.IS_DELETED
